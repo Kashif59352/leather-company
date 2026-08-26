@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login | Amanah Global Sourcing</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-brand">
+        <div class="mark">A</div>
+        <div>
+          <strong>AMANAH ADMIN</strong>
+          <small>PRODUCT CONTROL PANEL</small>
+        </div>
+      </div>
+
+      <div class="error-msg" id="error-msg"></div>
+
+      <form id="login-form">
+        <div class="field">
+          <label for="username">Username</label>
+          <input type="text" id="username" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <input type="password" id="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-gold" type="submit">Log In</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+  <script>
+    // If already logged in, skip straight to the dashboard.
+    checkSession(false);
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorBox = document.getElementById('error-msg');
+      errorBox.style.display = 'none';
+
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errorBox.textContent = data.error || 'Login failed';
+          errorBox.style.display = 'block';
+          return;
+        }
+        window.location.href = 'dashboard.html';
+      } catch (err) {
+        errorBox.textContent = 'Could not reach the server. Please try again.';
+        errorBox.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>

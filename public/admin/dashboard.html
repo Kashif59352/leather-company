@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product Control Panel | Amanah Global Sourcing</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+  <div class="dash-header">
+    <div class="brand"><div class="mark">A</div> AMANAH ADMIN</div>
+    <div class="who">
+      <span id="who-label"></span>
+      <button class="btn btn-outline" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+
+  <main class="dash-main">
+    <h1 class="dash-title">Products</h1>
+    <p class="dash-subtitle">Products added here show up on the public website immediately.</p>
+
+    <div class="panel">
+      <h2 id="form-heading">Add a Product</h2>
+      <div class="error-msg" id="product-error"></div>
+      <div class="success-msg" id="product-success"></div>
+      <form class="product-form" id="product-form">
+        <input type="hidden" id="product-id">
+        <div class="field full">
+          <label for="title">Product Title *</label>
+          <input type="text" id="title" required placeholder="e.g. Leather Garments">
+        </div>
+        <div class="field full">
+          <label for="imageUrl">Image URL</label>
+          <input type="text" id="imageUrl" placeholder="https://...">
+        </div>
+        <div class="field full">
+          <label for="description">Description</label>
+          <textarea id="description" placeholder="Short description shown under the title"></textarea>
+        </div>
+        <div class="full" style="display:flex; gap:10px;">
+          <button class="btn btn-gold" type="submit" id="submit-btn">Add Product</button>
+          <button class="btn btn-outline" type="button" id="cancel-edit" style="display:none;">Cancel Edit</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Current Products</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Image</th>
+            <th>Title</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="products-tbody">
+          <tr class="empty-row"><td colspan="4">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <h2>Change Password</h2>
+      <div class="error-msg" id="pw-error"></div>
+      <div class="success-msg" id="pw-success"></div>
+      <form id="pw-form" class="product-form">
+        <div class="field">
+          <label for="current-password">Current Password</label>
+          <input type="password" id="current-password" required>
+        </div>
+        <div class="field">
+          <label for="new-password">New Password</label>
+          <input type="password" id="new-password" required minlength="6">
+        </div>
+        <div class="full">
+          <button class="btn btn-gold" type="submit">Update Password</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="admin.js"></script>
+  <script>
+    checkSession(true).then(data => {
+      if (data && data.username) {
+        document.getElementById('who-label').textContent = 'Logged in as ' + data.username;
+      }
+    });
+
+    const tbody = document.getElementById('products-tbody');
+    const form = document.getElementById('product-form');
+    const formHeading = document.getElementById('form-heading');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelEditBtn = document.getElementById('cancel-edit');
+    const productError = document.getElementById('product-error');
+    const productSuccess = document.getElementById('product-success');
+
+    function escapeHtml(str) {
+      return (str || '').replace(/[&<>"']/g, (c) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function showMsg(el, text) {
+      el.textContent = text;
+      el.style.display = 'block';
+      setTimeout(() => { el.style.display = 'none'; }, 4000);
+    }
+
+    async function loadProducts() {
+      const res = await fetch('/api/products');
+      const products = await res.json();
+
+      if (!products.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="4">No products yet — add your first one above.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = products.map(p => `
+        <tr>
+          <td class="thumb"><img src="${escapeHtml(p.imageUrl)}" alt=""></td>
+          <td>${escapeHtml(p.title)}</td>
+          <td>${escapeHtml(p.description)}</td>
+          <td class="actions-cell">
+            <button class="btn btn-outline" onclick='startEdit(${JSON.stringify(p)})'>Edit</button>
+            <button class="btn btn-danger" onclick="deleteProduct('${p.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function startEdit(product) {
+      document.getElementById('product-id').value = product.id;
+      document.getElementById('title').value = product.title;
+      document.getElementById('imageUrl').value = product.imageUrl;
+      document.getElementById('description').value = product.description;
+      formHeading.textContent = 'Edit Product';
+      submitBtn.textContent = 'Save Changes';
+      cancelEditBtn.style.display = 'inline-flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      form.reset();
+      document.getElementById('product-id').value = '';
+      formHeading.textContent = 'Add a Product';
+      submitBtn.textContent = 'Add Product';
+      cancelEditBtn.style.display = 'none';
+    }
+
+    cancelEditBtn.addEventListener('click', resetForm);
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('product-id').value;
+      const payload = {
+        title: document.getElementById('title').value,
+        imageUrl: document.getElementById('imageUrl').value,
+        description: document.getElementById('description').value
+      };
+
+      const url = id ? `/api/products/${id}` : '/api/products';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(productError, data.error || 'Something went wrong');
+        return;
+      }
+
+      showMsg(productSuccess, id ? 'Product updated.' : 'Product added.');
+      resetForm();
+      loadProducts();
+    });
+
+    async function deleteProduct(id) {
+      if (!confirm('Delete this product? This cannot be undone.')) return;
+      const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
+      if (res.ok) loadProducts();
+    }
+
+    document.getElementById('pw-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const pwError = document.getElementById('pw-error');
+      const pwSuccess = document.getElementById('pw-success');
+      const currentPassword = document.getElementById('current-password').value;
+      const newPassword = document.getElementById('new-password').value;
+
+      const res = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(pwError, data.error || 'Could not update password');
+        return;
+      }
+      showMsg(pwSuccess, 'Password updated.');
+      document.getElementById('pw-form').reset();
+    });
+
+    loadProducts();
+  </script>
+</body>
+</html>

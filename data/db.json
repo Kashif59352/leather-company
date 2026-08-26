@@ -1,0 +1,40 @@
+{
+  "products": [
+    {
+      "id": "p1",
+      "title": "Leather Garments",
+      "description": "Jackets, pants, shirts, skirts, coats, blazers and custom leather styles.",
+      "imageUrl": "https://images.unsplash.com/photo-1551028719-00167b16eac5?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "p2",
+      "title": "Denim Apparel",
+      "description": "Jeans, denim jackets, shirts, pants and fashion denim programs.",
+      "imageUrl": "https://images.unsplash.com/photo-1542272604-787c3835535d?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "p3",
+      "title": "Textile Apparel",
+      "description": "Cotton and woven apparel developed for private-label and brand collections.",
+      "imageUrl": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "p4",
+      "title": "Fashion Bottoms",
+      "description": "Pants, trousers, shorts and tailored silhouettes with detailed finishing.",
+      "imageUrl": "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "p5",
+      "title": "Shirts & Outerwear",
+      "description": "Casual, fashion and utility shirts with custom trims and construction.",
+      "imageUrl": "https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&w=900&q=80"
+    },
+    {
+      "id": "p6",
+      "title": "Custom Programs",
+      "description": "Bring your tech pack, reference sample or concept and develop it with us.",
+      "imageUrl": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=900&q=80"
+    }
+  ]
+}
