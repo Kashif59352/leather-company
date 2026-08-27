@@ -29,4 +29,36 @@ async function loadProducts() {
   }
 }
 
+async function loadTeam() {
+  const grid = document.getElementById('team-grid');
+  if (!grid) return;
+  try {
+    const res = await fetch('/api/team');
+    const team = await res.json();
+
+    if (!team.length) {
+      grid.innerHTML = '<div class="products-empty">Team information coming soon.</div>';
+      return;
+    }
+
+    grid.innerHTML = team.map(m => `
+      <div class="team-card">
+        <div class="team-photo" style="${m.imageUrl ? `background-image:url('${escapeHtml(m.imageUrl)}')` : ''}">${m.imageUrl ? '' : escapeHtml(initials(m.name))}</div>
+        <div class="card-body">
+          <h3>${escapeHtml(m.name)}</h3>
+          <div class="team-role">${escapeHtml(m.designation)}</div>
+          <p>${escapeHtml(m.description)}</p>
+        </div>
+      </div>
+    `).join('');
+  } catch (err) {
+    grid.innerHTML = '<div class="products-empty">Could not load team right now.</div>';
+  }
+}
+
+function initials(name) {
+  return (name || '').replace(/^(Mr\.|Ms\.|Mrs\.|Dr\.)\s*/i, '').trim().split(/\s+/).slice(0, 2).map(w => w[0] || '').join('').toUpperCase();
+}
+
 loadProducts();
+loadTeam();

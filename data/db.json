@@ -36,5 +36,49 @@
       "description": "Bring your tech pack, reference sample or concept and develop it with us.",
       "imageUrl": "https://images.unsplash.com/photo-1556905055-8f358a7a47b2?auto=format&fit=crop&w=900&q=80"
     }
+  ],
+  "team": [
+    {
+      "id": "t1",
+      "name": "Mr. Mansoor Ahmed",
+      "designation": "Products Development & Sourcing Manager",
+      "description": "Handles product development, customer requirements, sourcing, sampling, costing coordination, and product follow-up from concept to production.",
+      "imageUrl": ""
+    },
+    {
+      "id": "t2",
+      "name": "Mr. Bilawal Raza",
+      "designation": "Export & Logistics Manager",
+      "description": "Manages export documentation, shipment coordination, logistics planning, freight arrangements, and timely delivery of international orders.",
+      "imageUrl": ""
+    },
+    {
+      "id": "t3",
+      "name": "Mr. Kashif Raza",
+      "designation": "IT & Customer Service",
+      "description": "Manages IT support, digital communication, customer coordination, online inquiries, and day-to-day technical assistance.",
+      "imageUrl": ""
+    },
+    {
+      "id": "t4",
+      "name": "Ms. Kulsoom",
+      "designation": "Leather Designer",
+      "description": "Responsible for leather fashion design, product concepts, styling, color and material selection, leather development, technical design, and seasonal leather collections.",
+      "imageUrl": ""
+    },
+    {
+      "id": "t5",
+      "name": "Ms. Hina Sajid",
+      "designation": "Denim & Textile Designer",
+      "description": "Responsible for denim and textile product design, creative concepts, fabric and wash selection, styling, color development, technical design details, and seasonal collection development.",
+      "imageUrl": ""
+    },
+    {
+      "id": "t6",
+      "name": "Mr. Sameer Ahmed",
+      "designation": "Production Management Manager",
+      "description": "Oversees production planning, factory coordination, workflow management, quality follow-up, production schedules, and timely order completion.",
+      "imageUrl": ""
+    }
   ]
 }

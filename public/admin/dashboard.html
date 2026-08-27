@@ -61,6 +61,56 @@
       </table>
     </div>
 
+    <h1 class="dash-title" style="margin-top:40px;">Our Team</h1>
+    <p class="dash-subtitle">Team members added here show up in the "Our Team" section on the public website immediately.</p>
+
+    <div class="panel">
+      <h2 id="team-form-heading">Add a Team Member</h2>
+      <div class="error-msg" id="team-error"></div>
+      <div class="success-msg" id="team-success"></div>
+      <form class="product-form" id="team-form">
+        <input type="hidden" id="team-id">
+        <div class="field full">
+          <label for="team-name">Name *</label>
+          <input type="text" id="team-name" required placeholder="e.g. Mr. Mansoor Ahmed">
+        </div>
+        <div class="field full">
+          <label for="team-designation">Designation *</label>
+          <input type="text" id="team-designation" required placeholder="e.g. Products Development & Sourcing Manager">
+        </div>
+        <div class="field full">
+          <label for="team-imageUrl">Photo URL</label>
+          <input type="text" id="team-imageUrl" placeholder="https://... (optional)">
+        </div>
+        <div class="field full">
+          <label for="team-description">Description</label>
+          <textarea id="team-description" placeholder="Short description of responsibilities"></textarea>
+        </div>
+        <div class="full" style="display:flex; gap:10px;">
+          <button class="btn btn-gold" type="submit" id="team-submit-btn">Add Team Member</button>
+          <button class="btn btn-outline" type="button" id="team-cancel-edit" style="display:none;">Cancel Edit</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="panel">
+      <h2>Current Team Members</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Photo</th>
+            <th>Name</th>
+            <th>Designation</th>
+            <th>Description</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="team-tbody">
+          <tr class="empty-row"><td colspan="5">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
     <div class="panel">
       <h2>Change Password</h2>
       <div class="error-msg" id="pw-error"></div>
@@ -186,6 +236,98 @@
       const res = await fetch(`/api/products/${id}`, { method: 'DELETE' });
       if (res.ok) loadProducts();
     }
+
+    // ---------- Team management ----------
+    const teamTbody = document.getElementById('team-tbody');
+    const teamForm = document.getElementById('team-form');
+    const teamFormHeading = document.getElementById('team-form-heading');
+    const teamSubmitBtn = document.getElementById('team-submit-btn');
+    const teamCancelEditBtn = document.getElementById('team-cancel-edit');
+    const teamError = document.getElementById('team-error');
+    const teamSuccess = document.getElementById('team-success');
+
+    async function loadTeam() {
+      const res = await fetch('/api/team');
+      const team = await res.json();
+
+      if (!team.length) {
+        teamTbody.innerHTML = '<tr class="empty-row"><td colspan="5">No team members yet — add your first one above.</td></tr>';
+        return;
+      }
+
+      teamTbody.innerHTML = team.map(m => `
+        <tr>
+          <td class="thumb">${m.imageUrl ? `<img src="${escapeHtml(m.imageUrl)}" alt="">` : ''}</td>
+          <td>${escapeHtml(m.name)}</td>
+          <td>${escapeHtml(m.designation)}</td>
+          <td>${escapeHtml(m.description)}</td>
+          <td class="actions-cell">
+            <button class="btn btn-outline" onclick='startEditTeam(${JSON.stringify(m)})'>Edit</button>
+            <button class="btn btn-danger" onclick="deleteTeamMember('${m.id}')">Delete</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function startEditTeam(member) {
+      document.getElementById('team-id').value = member.id;
+      document.getElementById('team-name').value = member.name;
+      document.getElementById('team-designation').value = member.designation;
+      document.getElementById('team-imageUrl').value = member.imageUrl;
+      document.getElementById('team-description').value = member.description;
+      teamFormHeading.textContent = 'Edit Team Member';
+      teamSubmitBtn.textContent = 'Save Changes';
+      teamCancelEditBtn.style.display = 'inline-flex';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetTeamForm() {
+      teamForm.reset();
+      document.getElementById('team-id').value = '';
+      teamFormHeading.textContent = 'Add a Team Member';
+      teamSubmitBtn.textContent = 'Add Team Member';
+      teamCancelEditBtn.style.display = 'none';
+    }
+
+    teamCancelEditBtn.addEventListener('click', resetTeamForm);
+
+    teamForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('team-id').value;
+      const payload = {
+        name: document.getElementById('team-name').value,
+        designation: document.getElementById('team-designation').value,
+        imageUrl: document.getElementById('team-imageUrl').value,
+        description: document.getElementById('team-description').value
+      };
+
+      const url = id ? `/api/team/${id}` : '/api/team';
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        showMsg(teamError, data.error || 'Something went wrong');
+        return;
+      }
+
+      showMsg(teamSuccess, id ? 'Team member updated.' : 'Team member added.');
+      resetTeamForm();
+      loadTeam();
+    });
+
+    async function deleteTeamMember(id) {
+      if (!confirm('Delete this team member? This cannot be undone.')) return;
+      const res = await fetch(`/api/team/${id}`, { method: 'DELETE' });
+      if (res.ok) loadTeam();
+    }
+
+    loadTeam();
 
     document.getElementById('pw-form').addEventListener('submit', async (e) => {
       e.preventDefault();

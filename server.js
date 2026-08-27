@@ -123,6 +123,51 @@ app.delete('/api/products/:id', requireAuth, (req, res) => {
   res.json({ ok: true });
 });
 
+// ---------- team routes ----------
+app.get('/api/team', (req, res) => {
+  const db = readDB();
+  res.json(db.team || []);
+});
+
+app.post('/api/team', requireAuth, (req, res) => {
+  const { name, designation, description, imageUrl } = req.body || {};
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
+  const db = readDB();
+  const newMember = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name.trim(),
+    designation: (designation || '').trim(),
+    description: (description || '').trim(),
+    imageUrl: (imageUrl || '').trim()
+  };
+  db.team = db.team || [];
+  db.team.push(newMember);
+  writeDB(db);
+  res.status(201).json(newMember);
+});
+
+app.put('/api/team/:id', requireAuth, (req, res) => {
+  const db = readDB();
+  const idx = (db.team || []).findIndex(m => m.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Team member not found' });
+  const { name, designation, description, imageUrl } = req.body || {};
+  if (name !== undefined) db.team[idx].name = name.trim();
+  if (designation !== undefined) db.team[idx].designation = designation.trim();
+  if (description !== undefined) db.team[idx].description = description.trim();
+  if (imageUrl !== undefined) db.team[idx].imageUrl = imageUrl.trim();
+  writeDB(db);
+  res.json(db.team[idx]);
+});
+
+app.delete('/api/team/:id', requireAuth, (req, res) => {
+  const db = readDB();
+  const before = (db.team || []).length;
+  db.team = (db.team || []).filter(m => m.id !== req.params.id);
+  writeDB(db);
+  if (db.team.length === before) return res.status(404).json({ error: 'Team member not found' });
+  res.json({ ok: true });
+});
+
 // Static files last so /api routes above take priority
 app.use(express.static(path.join(__dirname, 'public')));
 
