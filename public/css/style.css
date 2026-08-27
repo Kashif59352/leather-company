@@ -632,6 +632,77 @@
             z-index: 60
         }
 
+        .btn-navy {
+            border: 1px solid var(--navy);
+            color: var(--navy)
+        }
+
+        .btn-navy:hover {
+            background: var(--navy);
+            color: #fff
+        }
+
+        .view-more-wrap {
+            text-align: center;
+            margin-top: 36px
+        }
+
+        .cat-hero {
+            background: var(--navy);
+            color: #fff;
+            padding: 70px 0 40px
+        }
+
+        .cat-hero h1 {
+            font-family: Georgia, serif;
+            font-size: clamp(32px, 5vw, 48px);
+            margin: 12px 0
+        }
+
+        .cat-hero p {
+            color: #cfd8e2;
+            max-width: 600px
+        }
+
+        .cat-jump {
+            background: #fff;
+            border-bottom: 1px solid #eee;
+            padding: 20px 0;
+            position: sticky;
+            top: 78px;
+            z-index: 40
+        }
+
+        .cat-jump-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .cat-chip {
+            padding: 9px 18px;
+            border: 1px solid #ddd;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--navy)
+        }
+
+        .cat-chip:hover {
+            background: var(--navy);
+            color: #fff;
+            border-color: var(--navy)
+        }
+
+        .cat-section {
+            padding: 60px 0;
+            border-bottom: 1px solid #f0f0f0
+        }
+
+        .cat-section:nth-child(even) {
+            background: var(--cream)
+        }
+
         .products-empty {
             grid-column: 1/-1;
             text-align: center;

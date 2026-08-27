@@ -6,6 +6,8 @@ function escapeHtml(str) {
 
 async function loadProducts() {
   const grid = document.getElementById('products-grid');
+  const moreWrap = document.getElementById('products-more-wrap');
+  if (!grid) return;
   try {
     const res = await fetch('/api/products');
     const products = await res.json();
@@ -15,7 +17,8 @@ async function loadProducts() {
       return;
     }
 
-    grid.innerHTML = products.map(p => `
+    const visible = products.slice(0, 6);
+    grid.innerHTML = visible.map(p => `
       <div class="card">
         <div class="card-img" style="background-image:url('${escapeHtml(p.imageUrl)}')"></div>
         <div class="card-body">
@@ -24,6 +27,10 @@ async function loadProducts() {
         </div>
       </div>
     `).join('');
+
+    if (moreWrap) {
+      moreWrap.style.display = products.length > 6 ? 'block' : 'none';
+    }
   } catch (err) {
     grid.innerHTML = '<div class="products-empty">Could not load products right now.</div>';
   }

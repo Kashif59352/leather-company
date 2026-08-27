@@ -115,6 +115,57 @@ app.post('/api/upload', requireAuth, (req, res) => {
   });
 });
 
+// ---------- category routes ----------
+app.get('/api/categories', (req, res) => {
+  const db = readDB();
+  res.json(db.categories || []);
+});
+
+app.post('/api/categories', requireAuth, (req, res) => {
+  const { name, description, imageUrl } = req.body || {};
+  if (!name || !name.trim()) return res.status(400).json({ error: 'Category name is required' });
+  const db = readDB();
+  const newCategory = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name: name.trim(),
+    description: (description || '').trim(),
+    imageUrl: (imageUrl || '').trim()
+  };
+  db.categories = db.categories || [];
+  db.categories.push(newCategory);
+  writeDB(db);
+  res.status(201).json(newCategory);
+});
+
+app.put('/api/categories/:id', requireAuth, (req, res) => {
+  const db = readDB();
+  const idx = (db.categories || []).findIndex(c => c.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: 'Category not found' });
+  const { name, description, imageUrl } = req.body || {};
+  if (name !== undefined) db.categories[idx].name = name.trim();
+  if (description !== undefined) db.categories[idx].description = description.trim();
+  if (imageUrl !== undefined) db.categories[idx].imageUrl = imageUrl.trim();
+  writeDB(db);
+  res.json(db.categories[idx]);
+});
+
+app.delete('/api/categories/:id', requireAuth, (req, res) => {
+  const db = readDB();
+  const before = (db.categories || []).length;
+  db.categories = (db.categories || []).filter(c => c.id !== req.params.id);
+  if (db.categories.length === before) {
+    writeDB(db);
+    return res.status(404).json({ error: 'Category not found' });
+  }
+  // Products that belonged to the deleted category become uncategorized
+  // rather than disappearing.
+  db.products = (db.products || []).map(p =>
+    p.categoryId === req.params.id ? { ...p, categoryId: '' } : p
+  );
+  writeDB(db);
+  res.json({ ok: true });
+});
+
 // ---------- product routes ----------
 app.get('/api/products', (req, res) => {
   const db = readDB();
@@ -122,14 +173,15 @@ app.get('/api/products', (req, res) => {
 });
 
 app.post('/api/products', requireAuth, (req, res) => {
-  const { title, description, imageUrl } = req.body || {};
+  const { title, description, imageUrl, categoryId } = req.body || {};
   if (!title || !title.trim()) return res.status(400).json({ error: 'Title is required' });
   const db = readDB();
   const newProduct = {
     id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
     title: title.trim(),
     description: (description || '').trim(),
-    imageUrl: (imageUrl || '').trim()
+    imageUrl: (imageUrl || '').trim(),
+    categoryId: (categoryId || '').trim()
   };
   db.products = db.products || [];
   db.products.push(newProduct);
@@ -141,10 +193,11 @@ app.put('/api/products/:id', requireAuth, (req, res) => {
   const db = readDB();
   const idx = (db.products || []).findIndex(p => p.id === req.params.id);
   if (idx === -1) return res.status(404).json({ error: 'Product not found' });
-  const { title, description, imageUrl } = req.body || {};
+  const { title, description, imageUrl, categoryId } = req.body || {};
   if (title !== undefined) db.products[idx].title = title.trim();
   if (description !== undefined) db.products[idx].description = description.trim();
   if (imageUrl !== undefined) db.products[idx].imageUrl = imageUrl.trim();
+  if (categoryId !== undefined) db.products[idx].categoryId = categoryId.trim();
   writeDB(db);
   res.json(db.products[idx]);
 });

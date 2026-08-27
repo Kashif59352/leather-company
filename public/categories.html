@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Browse all product categories from Amanah Global Sourcing - leather, denim, textile apparel and custom programs.">
+    <title>Product Categories | Amanah Global Sourcing</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+    <div class="topbar">
+        <div class="container"><span>Global Apparel Sourcing & Manufacturing</span><span>Karachi, Pakistan •
+                International Export</span></div>
+    </div>
+    <header>
+        <div class="container nav">
+            <a class="logo" href="index.html#home">
+                <div class="logo-mark">A</div>
+                <div>AMANAH<span>GLOBAL SOURCING</span><small>RELIABLE • RESPONSIBLE • GLOBAL</small></div>
+            </a>
+
+            <nav><a href="index.html#about">About</a><a href="index.html#products">Products</a><a
+                    href="index.html#team">Team</a><a href="index.html#services">Sourcing</a><a
+                    href="index.html#process">Manufacturing</a><a href="index.html#compliance">Compliance</a><a
+                    href="index.html#contact">Contact</a>
+            </nav>
+            <a class="btn btn-gold" href="index.html#quote">Request a Quote</a>
+        </div>
+    </header>
+
+    <main>
+        <section class="cat-hero">
+            <div class="container">
+                <div class="kicker">All Categories</div>
+                <h1>Browse Our Product Categories.</h1>
+                <p>Every category below lists the products developed under it. Click a category to jump straight to
+                    it.</p>
+            </div>
+        </section>
+
+        <section class="cat-jump">
+            <div class="container">
+                <div class="cat-jump-list" id="cat-jump-list">
+                    <span class="products-empty">Loading categories…</span>
+                </div>
+            </div>
+        </section>
+
+        <div id="categories-container">
+            <div class="container">
+                <div class="products-empty" style="padding:60px 0;">Loading categories…</div>
+            </div>
+        </div>
+
+        <section class="cta">
+            <div class="container cta-box">
+                <div>
+                    <h2>Have a product to source?</h2>
+                    <p>Send your tech pack, reference image or product brief.</p>
+                </div><a class="btn btn-gold" href="index.html#quote">Request a Quote</a>
+            </div>
+        </section>
+    </main>
+
+    <a class="whatsapp" href="https://wa.me/923113667587" target="_blank" aria-label="WhatsApp">◉</a>
+    <footer>
+        <div class="container footer-row">
+            <div>© 2026 <span class="gold">Amanah Global Sourcing</span>. All rights reserved.</div>
+            <div><a href="index.html">Back to Home</a></div>
+        </div>
+    </footer>
+
+    <script src="js/site.js"></script>
+    <script>
+        function escapeHtml2(str) {
+            return (str || '').replace(/[&<>"']/g, (c) => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function slugify(str) {
+            return 'cat-' + (str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+        }
+
+        async function loadCategoriesPage() {
+            const jumpList = document.getElementById('cat-jump-list');
+            const container = document.getElementById('categories-container');
+
+            try {
+                const [catRes, prodRes] = await Promise.all([
+                    fetch('/api/categories'),
+                    fetch('/api/products')
+                ]);
+                const categories = await catRes.json();
+                const products = await prodRes.json();
+
+                if (!categories.length) {
+                    jumpList.innerHTML = '';
+                    container.innerHTML = '<div class="container"><div class="products-empty" style="padding:60px 0;">No categories added yet.</div></div>';
+                    return;
+                }
+
+                // Jump nav chips
+                jumpList.innerHTML = categories.map(c =>
+                    `<a class="cat-chip" href="#${slugify(c.name)}">${escapeHtml2(c.name)}</a>`
+                ).join('');
+
+                // One section per category, each with its own products grid.
+                container.innerHTML = categories.map(c => {
+                    const catProducts = products.filter(p => p.categoryId === c.id);
+                    const grid = catProducts.length
+                        ? catProducts.map(p => `
+                            <div class="card">
+                                <div class="card-img" style="background-image:url('${escapeHtml2(p.imageUrl)}')"></div>
+                                <div class="card-body">
+                                    <h3>${escapeHtml2(p.title)}</h3>
+                                    <p>${escapeHtml2(p.description)}</p>
+                                </div>
+                            </div>
+                        `).join('')
+                        : '<div class="products-empty">No products in this category yet.</div>';
+
+                    return `
+                        <section id="${slugify(c.name)}" class="cat-section">
+                            <div class="container">
+                                <div class="section-head">
+                                    <div class="kicker">Category</div>
+                                    <h2>${escapeHtml2(c.name)}</h2>
+                                    ${c.description ? `<p>${escapeHtml2(c.description)}</p>` : ''}
+                                </div>
+                                <div class="grid">${grid}</div>
+                            </div>
+                        </section>
+                    `;
+                }).join('');
+
+                // Uncategorized products, shown only if any exist.
+                const uncategorized = products.filter(p => !p.categoryId || !categories.some(c => c.id === p.categoryId));
+                if (uncategorized.length) {
+                    container.innerHTML += `
+                        <section id="cat-uncategorized" class="cat-section">
+                            <div class="container">
+                                <div class="section-head">
+                                    <div class="kicker">Category</div>
+                                    <h2>Other Products</h2>
+                                </div>
+                                <div class="grid">
+                                    ${uncategorized.map(p => `
+                                        <div class="card">
+                                            <div class="card-img" style="background-image:url('${escapeHtml2(p.imageUrl)}')"></div>
+                                            <div class="card-body">
+                                                <h3>${escapeHtml2(p.title)}</h3>
+                                                <p>${escapeHtml2(p.description)}</p>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </section>
+                    `;
+                }
+            } catch (err) {
+                container.innerHTML = '<div class="container"><div class="products-empty" style="padding:60px 0;">Could not load categories right now.</div></div>';
+            }
+        }
+
+        loadCategoriesPage();
+    </script>
+</body>
+
+</html>
