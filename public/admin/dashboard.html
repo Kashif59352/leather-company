@@ -31,7 +31,13 @@
         </div>
         <div class="field full">
           <label for="imageUrl">Image URL</label>
-          <input type="text" id="imageUrl" placeholder="https://...">
+          <input type="text" id="imageUrl" placeholder="https://... (or upload a file below)">
+        </div>
+        <div class="field full">
+          <label for="image-file">Or Upload an Image</label>
+          <input type="file" id="image-file" accept="image/png,image/jpeg,image/webp,image/gif">
+          <div class="upload-status" id="image-upload-status"></div>
+          <img id="image-preview" class="image-preview" style="display:none;">
         </div>
         <div class="field full">
           <label for="description">Description</label>
@@ -80,7 +86,13 @@
         </div>
         <div class="field full">
           <label for="team-imageUrl">Photo URL</label>
-          <input type="text" id="team-imageUrl" placeholder="https://... (optional)">
+          <input type="text" id="team-imageUrl" placeholder="https://... (or upload a file below)">
+        </div>
+        <div class="field full">
+          <label for="team-image-file">Or Upload a Photo</label>
+          <input type="file" id="team-image-file" accept="image/png,image/jpeg,image/webp,image/gif">
+          <div class="upload-status" id="team-image-upload-status"></div>
+          <img id="team-image-preview" class="image-preview" style="display:none;">
         </div>
         <div class="field full">
           <label for="team-description">Description</label>
@@ -153,11 +165,58 @@
       }[c]));
     }
 
+    // Resolves an image path for display from inside /admin/ — absolute
+    // http(s) URLs are left as-is, server-relative paths get a leading slash
+    // so they resolve against the site root instead of /admin/.
+    function resolveImg(url) {
+      if (!url) return '';
+      return url.startsWith('http') ? url : '/' + url.replace(/^\/+/, '');
+    }
+
     function showMsg(el, text) {
       el.textContent = text;
       el.style.display = 'block';
       setTimeout(() => { el.style.display = 'none'; }, 4000);
     }
+
+    // Wires a file input to auto-upload on selection, filling the given URL
+    // input with the resulting server path and showing a small preview.
+    function wireImageUpload(fileInputId, urlInputId, statusId, previewId) {
+      const fileInput = document.getElementById(fileInputId);
+      const urlInput = document.getElementById(urlInputId);
+      const status = document.getElementById(statusId);
+      const preview = document.getElementById(previewId);
+
+      fileInput.addEventListener('change', async () => {
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        status.textContent = 'Uploading…';
+        status.style.display = 'block';
+
+        const formData = new FormData();
+        formData.append('image', file);
+
+        try {
+          const res = await fetch('/api/upload', { method: 'POST', body: formData });
+          const data = await res.json();
+          if (!res.ok) {
+            status.textContent = data.error || 'Upload failed';
+            return;
+          }
+          urlInput.value = data.imageUrl;
+          preview.src = '/' + data.imageUrl;
+          preview.style.display = 'block';
+          status.textContent = 'Uploaded ✓';
+          setTimeout(() => { status.style.display = 'none'; }, 2500);
+        } catch (err) {
+          status.textContent = 'Upload failed — check your connection';
+        }
+      });
+    }
+
+    wireImageUpload('image-file', 'imageUrl', 'image-upload-status', 'image-preview');
+    wireImageUpload('team-image-file', 'team-imageUrl', 'team-image-upload-status', 'team-image-preview');
 
     async function loadProducts() {
       const res = await fetch('/api/products');
@@ -170,7 +229,7 @@
 
       tbody.innerHTML = products.map(p => `
         <tr>
-          <td class="thumb"><img src="${escapeHtml(p.imageUrl)}" alt=""></td>
+          <td class="thumb"><img src="${escapeHtml(resolveImg(p.imageUrl))}" alt=""></td>
           <td>${escapeHtml(p.title)}</td>
           <td>${escapeHtml(p.description)}</td>
           <td class="actions-cell">
@@ -186,6 +245,13 @@
       document.getElementById('title').value = product.title;
       document.getElementById('imageUrl').value = product.imageUrl;
       document.getElementById('description').value = product.description;
+      const preview = document.getElementById('image-preview');
+      if (product.imageUrl) {
+        preview.src = product.imageUrl.startsWith('http') ? product.imageUrl : '/' + product.imageUrl;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
       formHeading.textContent = 'Edit Product';
       submitBtn.textContent = 'Save Changes';
       cancelEditBtn.style.display = 'inline-flex';
@@ -195,6 +261,7 @@
     function resetForm() {
       form.reset();
       document.getElementById('product-id').value = '';
+      document.getElementById('image-preview').style.display = 'none';
       formHeading.textContent = 'Add a Product';
       submitBtn.textContent = 'Add Product';
       cancelEditBtn.style.display = 'none';
@@ -257,7 +324,7 @@
 
       teamTbody.innerHTML = team.map(m => `
         <tr>
-          <td class="thumb">${m.imageUrl ? `<img src="${escapeHtml(m.imageUrl)}" alt="">` : ''}</td>
+          <td class="thumb">${m.imageUrl ? `<img src="${escapeHtml(resolveImg(m.imageUrl))}" alt="">` : ''}</td>
           <td>${escapeHtml(m.name)}</td>
           <td>${escapeHtml(m.designation)}</td>
           <td>${escapeHtml(m.description)}</td>
@@ -275,6 +342,13 @@
       document.getElementById('team-designation').value = member.designation;
       document.getElementById('team-imageUrl').value = member.imageUrl;
       document.getElementById('team-description').value = member.description;
+      const preview = document.getElementById('team-image-preview');
+      if (member.imageUrl) {
+        preview.src = member.imageUrl.startsWith('http') ? member.imageUrl : '/' + member.imageUrl;
+        preview.style.display = 'block';
+      } else {
+        preview.style.display = 'none';
+      }
       teamFormHeading.textContent = 'Edit Team Member';
       teamSubmitBtn.textContent = 'Save Changes';
       teamCancelEditBtn.style.display = 'inline-flex';
@@ -284,6 +358,7 @@
     function resetTeamForm() {
       teamForm.reset();
       document.getElementById('team-id').value = '';
+      document.getElementById('team-image-preview').style.display = 'none';
       teamFormHeading.textContent = 'Add a Team Member';
       teamSubmitBtn.textContent = 'Add Team Member';
       teamCancelEditBtn.style.display = 'none';

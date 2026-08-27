@@ -4,9 +4,14 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 
 const app = express();
 const DB_PATH = path.join(__dirname, 'data', 'db.json');
+const UPLOADS_DIR = path.join(__dirname, 'public', 'images', 'uploads');
+
+// Make sure the uploads folder exists.
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 // ---------- tiny JSON "database" ----------
 function readDB() {
@@ -78,6 +83,36 @@ app.post('/api/change-password', requireAuth, (req, res) => {
   db.admin.passwordHash = bcrypt.hashSync(newPassword, 10);
   writeDB(db);
   res.json({ ok: true });
+});
+
+// ---------- image upload ----------
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => {
+    const safeExt = path.extname(file.originalname).toLowerCase().replace(/[^a-z0-9.]/g, '');
+    const unique = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    cb(null, unique + (safeExt || '.jpg'));
+  }
+});
+const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_TYPES.includes(file.mimetype)) {
+      return cb(new Error('Only JPG, PNG, WEBP or GIF images are allowed'));
+    }
+    cb(null, true);
+  }
+});
+
+app.post('/api/upload', requireAuth, (req, res) => {
+  upload.single('image')(req, res, (err) => {
+    if (err) return res.status(400).json({ error: err.message || 'Upload failed' });
+    if (!req.file) return res.status(400).json({ error: 'No file received' });
+    const imageUrl = 'images/uploads/' + req.file.filename;
+    res.json({ imageUrl });
+  });
 });
 
 // ---------- product routes ----------
